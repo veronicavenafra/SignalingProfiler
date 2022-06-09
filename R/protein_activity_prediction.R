@@ -106,7 +106,7 @@ run_viper <- function(viper_format, analysis, organism, minsize){
     stop('please provide a valid analysis name')
   }
 
-  regulons <- regulons %>% distinct()
+  regulons <- regulons %>% dplyr::distinct()
 
   if(identical(intersect(rownames(diff_matrix), regulons$target), character(0))){
     stop('No measured analyte found in regulons')
@@ -529,7 +529,7 @@ generate_hybrid_db <- function(mh_alignment){
 
 #' Title
 #'
-#' @param phosphoproteomics_data
+#' @param phosphoproteomic_data
 #' @param organism
 #'
 #' @return phosphoscore_df representing experimentally quantified phosphosites
@@ -537,7 +537,7 @@ generate_hybrid_db <- function(mh_alignment){
 #' @export
 #'
 #' @examples
-map_experimental_on_regulatory_phosphosites <- function(phosphoproteomics_data,
+map_experimental_on_regulatory_phosphosites <- function(phosphoproteomic_data,
                                                         organism,
                                                         path_fasta){
   if(organism == 'human'){
