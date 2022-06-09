@@ -208,14 +208,14 @@ run_hypergeometric_test <- function(omic_data, viper_output,
 
   pho_in_reg <- df_regulons[df_regulons$target %in% toupper(rownames(all_enriched_matrix)),] %>%
     dplyr::arrange(tf) %>%
-    dplyr::count(tf)
+    plyr::count(tf)
 
   # from viper analysis get all significant analytes
   all_significant_matrix <- create_matrix_from_VIPER_format(create_viper_format(omic_data, analysis, significance = TRUE))
 
   pho_in_reg_sign <- df_regulons[df_regulons$target %in% toupper(rownames(all_significant_matrix)),] %>%
     dplyr::arrange(tf) %>%
-    dplyr::count(tf)
+    plyr::count(tf)
 
 
   pr_joined <- dplyr::left_join(viper_output, pho_in_reg, by = c('gene_name' = 'tf')) %>%
@@ -526,9 +526,10 @@ generate_hybrid_db <- function(mh_alignment){
   return(good_phos_df_hybrid)
 }
 
+
 #' Title
 #'
-#' @param phosphoproteomics_data
+#' @param phosphoproteomic_data
 #' @param organism
 #'
 #' @return phosphoscore_df representing experimentally quantified phosphosites
@@ -536,7 +537,7 @@ generate_hybrid_db <- function(mh_alignment){
 #' @export
 #'
 #' @examples
-map_experimental_on_regulatory_phosphosites <- function(phosphoproteomics_data,
+map_experimental_on_regulatory_phosphosites <- function(phosphoproteomic_data,
                                                         organism,
                                                         path_fasta){
   if(organism == 'human'){

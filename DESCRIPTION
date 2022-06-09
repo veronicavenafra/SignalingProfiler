@@ -15,6 +15,7 @@ Imports:
     GOSim,
     igraph,
     magrittr,
+    plyr,
     RVenn,
     stringr,
     tibble,
