@@ -15,6 +15,7 @@
 #'
 #' @examples
 create_viper_format <- function(omic_data, analysis, significance){
+  print('ciao')
   if(significance == TRUE){
     omic_filtered <- omic_data %>% dplyr::filter(significant == '+')
 
@@ -379,7 +380,7 @@ phosphoscore_computation <- function(phosphoproteomic_data,
   #
 
   if(organism == 'mouse' | organism =='human'){
-    phosphoscore_df_output <- map_experimental_on_regulatory_phosphosites(phosphoproteomics_data,
+    phosphoscore_df_output <- map_experimental_on_regulatory_phosphosites(phosphoproteomic_data,
                                                                    organism, path_fasta)
     phosphoscore_df <- phosphoscore_df_output$phosphoscore_df
   }else if(organism == 'hybrid'){
