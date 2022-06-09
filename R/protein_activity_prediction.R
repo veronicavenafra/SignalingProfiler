@@ -15,6 +15,7 @@
 #'
 #' @examples
 create_viper_format <- function(omic_data, analysis, significance){
+  print('ciao')
   if(significance == TRUE){
     omic_filtered <- omic_data %>% dplyr::filter(significant == '+')
 
@@ -105,7 +106,7 @@ run_viper <- function(viper_format, analysis, organism, minsize){
     stop('please provide a valid analysis name')
   }
 
-  regulons <- regulons %>% distinct()
+  regulons <- regulons %>% dplyr::distinct()
 
   if(identical(intersect(rownames(diff_matrix), regulons$target), character(0))){
     stop('No measured analyte found in regulons')
@@ -401,7 +402,7 @@ phosphoscore_computation <- function(phosphoproteomic_data,
   exp_fc_sub <- exp_fc_sub %>%
     dplyr::mutate(aa = paste0(aminoacid, position)) %>%
     dplyr::group_by(gene_name) %>%
-    dplyr::summarise(n_sign_phos = n(),
+    dplyr::summarise(n_sign_phos = dplyr::n(),
                      phos = paste0(aa, collapse = ';'))
 
   output <- dplyr::left_join(raw_output, exp_fc_sub, by = 'gene_name')
