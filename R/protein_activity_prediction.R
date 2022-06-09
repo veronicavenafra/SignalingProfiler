@@ -96,7 +96,7 @@ run_viper <- function(viper_format, analysis, organism, minsize){
     if(organism == 'human'){
       regulons <- ksea_db_human
     }else if(organism == 'mouse'){
-      regulons <- ksea_db_mouse %>% mutate(tf = toupper(tf))
+      regulons <- ksea_db_mouse %>% dplyr::mutate(tf = toupper(tf))
     }else{
       stop('please provide a valid organism name')
     }
