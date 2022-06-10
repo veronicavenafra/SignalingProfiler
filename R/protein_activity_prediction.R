@@ -15,7 +15,6 @@
 #'
 #' @examples
 create_viper_format <- function(omic_data, analysis, significance){
-  print('ciao')
   if(significance == TRUE){
     omic_filtered <- omic_data %>% dplyr::filter(significant == '+')
 
@@ -337,7 +336,7 @@ filter_VIPER_output <- function(inferred_proteins_mf, analysis){
 run_footprint_based_analysis <- function(omic_data, analysis, organism,
                                          minsize, viper_significance,
                                          hypergeometric_correction){
-
+  message(' ** RUNNING FOOTPRINT BASED ANALYSIS ** ')
   # omic_data <- tr_df
   # analysis <- 'tfea'
   # organism <- 'mouse'
@@ -348,14 +347,19 @@ run_footprint_based_analysis <- function(omic_data, analysis, organism,
 
   # run viper analysis
   viper_format <- create_viper_format(omic_data, analysis, significance = viper_significance)
+
+
+  message('Starting VIPER analysis')
   output <- run_viper(viper_format, analysis, organism, minsize)
   if(hypergeometric_correction == TRUE){
+    message('Starting hypergeometric test correction')
     output <- weight_viper_score(run_hypergeometric_test(omic_data,output$sign, analysis, organism))
+
     output_uniprot <- convert_gene_name_in_uniprotid(output, organism)
   }else{
     output_uniprot <- convert_gene_name_in_uniprotid(output$sign, organism)
   }
-
+  message('GO molecular function annotation')
   output_uni_mf <- molecular_function_annotation(output_uniprot)
 
   output_final <- filter_VIPER_output(output_uni_mf, analysis) %>% dplyr::distinct()
@@ -379,7 +383,7 @@ run_footprint_based_analysis <- function(omic_data, analysis, organism,
 phosphoscore_computation <- function(phosphoproteomic_data,
                                     organism,
                                     path_fasta = './phospho.fasta'){
-
+  message('** RUNNING PHOSPHOSCORE ANALYSIS **')
   # phosphoproteomic_data <- phospho_df
   # path_fasta = './phospho.fasta'
   # organism = 'mouse'
@@ -472,6 +476,7 @@ create_fasta <- function(phospho_df, path){
 #'
 #' @examples
 run_blast <- function(path_experimental_fasta_file, all = FALSE){
+  message('Running blastp')
   path_experimental_fasta_file <- './phospho.fasta'
   blastp <- paste0('blastp -query ', path_experimental_fasta_file,
                    ' -subject ./data-raw/files/human_phosphosites_db.fasta -out map2.out -outfmt 7 -evalue 0.05')
@@ -548,10 +553,14 @@ map_experimental_on_regulatory_phosphosites <- function(phosphoproteomic_data,
                                                         organism,
                                                         path_fasta){
   if(organism == 'human'){
+    message('Mapping experimental phosphopeptides on human database of regulatory roles')
     reg_phos_db <- good_phos_df_human
   }else if(organism == 'mouse'){
+    message('Mapping experimental phosphopeptides on mouse database of regulatory roles')
     reg_phos_db <- good_phos_df_mouse
+
   }else if(organism == 'hybrid'){
+    message('Mapping mouse experimental phosphopeptides on human database of regulatory roles to enhance coverage')
     create_fasta(phosphoproteomic_data, path_fasta)
     reg_phos_db <- generate_hybrid_db(mh_alignment = run_blast(path_fasta)$mapped)
   }else{
@@ -598,6 +607,7 @@ phospho_score_hybrid_computation <- function(phosphoproteomic_data,
   phosphoscore_df_hybrid <- phosphoscore_df_hybrid_output$phosphoscore_df %>%
     dplyr::select(PHOSPHO_KEY_GN_SEQ, inferred_activity, gene_name)
 
+  message('Computing Phosphoscore')
   joined_tables <- dplyr::full_join(phosphoscore_df_mouse, phosphoscore_df_hybrid,
                              by = c('PHOSPHO_KEY_GN_SEQ', 'gene_name'),
                              suffix = c('.m', '.h')) %>%
