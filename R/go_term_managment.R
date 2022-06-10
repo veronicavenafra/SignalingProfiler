@@ -25,7 +25,7 @@ molecular_function_annotation <- function(inferred_proteins_dataset){
   pattern <- "(\\[.*?\\])"
   matches <- gregexpr(pattern, ovl)
   overlap <- regmatches(ovl, matches)
-  GOterm <- lapply(overlap, function(x){str_sub(x, 2,-2)})
+  GOterm <- lapply(overlap, function(x){stringr::str_sub(x, 2,-2)})
 
   # set ontology as MF
   GOSim::setOntology(ont = "MF", loadIC=TRUE, DIR=NULL)

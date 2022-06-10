@@ -24,7 +24,6 @@ convert_gene_name_in_uniprotid <- function(bio_dataset, organism){
     stop('please provide a valid organism')
   }
 
-  PKN_proteins_mouse %>% count(ENTITY)
 
   bio_dataset_with_id <- dplyr::left_join(bio_dataset,
                          db %>% dplyr::select(ID, ENTITY),

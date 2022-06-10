@@ -16,6 +16,7 @@ Imports:
     igraph,
     magrittr,
     plyr,
+    readr,
     RVenn,
     stringr,
     tibble,

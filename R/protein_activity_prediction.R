@@ -168,7 +168,7 @@ run_hypergeometric_test <- function(omic_data, viper_output,
                                            position))
     uni_meas_v <- uni_meas_f$phosphositeID
 
-    uni_sign_f <- uni_sign %>%
+    uni_sign_f <- omic_data %>%
       dplyr::filter(significant == '+') %>%
       dplyr::mutate(phosphositeID = paste0(toupper(UNIPROT),'-',
                                            aminoacid,'-',
@@ -209,14 +209,16 @@ run_hypergeometric_test <- function(omic_data, viper_output,
 
   pho_in_reg <- df_regulons[df_regulons$target %in% toupper(rownames(all_enriched_matrix)),] %>%
     dplyr::arrange(tf) %>%
-    plyr::count(tf)
+    plyr::count('tf') %>%
+    dplyr::rename(n = freq)
 
   # from viper analysis get all significant analytes
   all_significant_matrix <- create_matrix_from_VIPER_format(create_viper_format(omic_data, analysis, significance = TRUE))
 
   pho_in_reg_sign <- df_regulons[df_regulons$target %in% toupper(rownames(all_significant_matrix)),] %>%
     dplyr::arrange(tf) %>%
-    plyr::count(tf)
+    plyr::count('tf') %>%
+    dplyr::rename(n = freq)
 
 
   pr_joined <- dplyr::left_join(viper_output, pho_in_reg, by = c('gene_name' = 'tf')) %>%
@@ -231,10 +233,14 @@ run_hypergeometric_test <- function(omic_data, viper_output,
 
   for(protein in proteins){
     significant_members <- df_regulons[df_regulons$target %in% toupper(rownames(all_significant_matrix)),] %>%
-      arrange(tf) %>% filter(tf == protein) %>% dplyr::select(target) %>% unlist() %>% as.character
+      dplyr::arrange(tf) %>%
+      dplyr::filter(tf == protein) %>%
+      dplyr::select(target) %>% unlist() %>% as.character
 
     regulon_members <- df_regulons[df_regulons$target %in% toupper(rownames(all_enriched_matrix)),] %>%
-      arrange(tf) %>% filter(tf == protein) %>% dplyr::select(target) %>% unlist() %>% as.character
+      dplyr::arrange(tf) %>%
+      dplyr::filter(tf == protein) %>%
+      dplyr::select(target) %>% unlist() %>% as.character
 
     # creating Venn object
     VennObject <- RVenn::Venn(list(RegulonMeasured = regulon_members,
@@ -470,7 +476,7 @@ run_blast <- function(path_experimental_fasta_file, all = FALSE){
   blastp <- paste0('blastp -query ', path_experimental_fasta_file,
                    ' -subject ./data-raw/files/human_phosphosites_db.fasta -out map2.out -outfmt 7 -evalue 0.05')
   system(blastp)
-  mapped <- dplyr::read_tsv('./map2.out',
+  mapped <- readr::read_tsv('./map2.out',
                            comment = '#',
                            col_names = c('q_ID', 's_ID', 'pid', 'length',
                                          'mismatch', 'gapopen', 'qstart',
@@ -514,7 +520,7 @@ run_blast <- function(path_experimental_fasta_file, all = FALSE){
 generate_hybrid_db <- function(mh_alignment){
   # regulatory role of phosphosites in human
   hreg_phos <- good_phos_df_human
-  mh_alignment <- sure
+  #mh_alignment <- sure
   good_phos_df_hybrid <- dplyr::left_join(mh_alignment,
                                           hreg_phos,
                                           by = c('s_ID' = 'PHOSPHO_KEY_GN_SEQ')) %>%
@@ -547,7 +553,7 @@ map_experimental_on_regulatory_phosphosites <- function(phosphoproteomic_data,
     reg_phos_db <- good_phos_df_mouse
   }else if(organism == 'hybrid'){
     create_fasta(phosphoproteomic_data, path_fasta)
-    reg_phos_db <- generate_hybrid_db(run_blast(path_fasta))
+    reg_phos_db <- generate_hybrid_db(mh_alignment = run_blast(path_fasta)$mapped)
   }else{
     stop('please provide a valid organism')
   }
