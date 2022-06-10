@@ -162,7 +162,7 @@ run_hypergeometric_test <- function(omic_data, viper_output,
 
   }else if(analysis == 'ksea'){
 
-    uni_meas_f <- uni_meas %>%
+    uni_meas_f <- omic_data %>%
       dplyr::mutate(phosphositeID = paste0(toupper(UNIPROT),'-',
                                            aminoacid,'-',
                                            position))
