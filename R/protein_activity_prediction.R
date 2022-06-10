@@ -478,8 +478,9 @@ create_fasta <- function(phospho_df, path){
 run_blast <- function(path_experimental_fasta_file, all = FALSE){
   message('Running blastp')
   path_experimental_fasta_file <- './phospho.fasta'
+  path_package <- paste0(.libPaths(), '/SignalingProfiler/')
   blastp <- paste0('blastp -query ', path_experimental_fasta_file,
-                   ' -subject ./data/human_phosphosites_db.fasta -out map2.out -outfmt 7 -evalue 0.05')
+                   ' -subject', paste0(path_package, 'data/human_phosphosites_db.fasta '), '-out map2.out -outfmt 7 -evalue 0.05')
   system(blastp)
   mapped <- readr::read_tsv('./map2.out',
                            comment = '#',
