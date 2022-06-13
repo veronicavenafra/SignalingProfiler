@@ -410,7 +410,8 @@ phosphoscore_computation <- function(phosphoproteomic_data,
     dplyr::select(gene_name, PHOSPHO_KEY_GN_SEQ, aminoacid, position)
 
   exp_fc_sub <- exp_fc_sub %>%
-    dplyr::mutate(aa = paste0(aminoacid, position)) %>%
+    dplyr::mutate(aa = paste0(aminoacid, position),
+                  gene_name = toupper(gene_name)) %>%
     dplyr::group_by(gene_name) %>%
     dplyr::summarise(n_sign_phos = dplyr::n(),
                      phos = paste0(aa, collapse = ';'))
