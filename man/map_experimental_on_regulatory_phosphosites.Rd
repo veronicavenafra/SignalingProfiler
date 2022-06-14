@@ -8,7 +8,7 @@ map_experimental_on_regulatory_phosphosites(
   phosphoproteomic_data,
   organism,
   path_fasta,
-  local
+  local = FALSE
 )
 }
 \arguments{

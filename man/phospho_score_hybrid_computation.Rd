@@ -7,7 +7,8 @@
 phospho_score_hybrid_computation(
   phosphoproteomic_data,
   organism,
-  path_fasta = "./phospho.fasta"
+  path_fasta = "./phospho.fasta",
+  local
 )
 }
 \arguments{

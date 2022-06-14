@@ -8,7 +8,7 @@ phosphoscore_computation(
   phosphoproteomic_data,
   organism,
   path_fasta = "./phospho.fasta",
-  local
+  local = FALSE
 )
 }
 \arguments{
