@@ -661,7 +661,7 @@ combine_footprint_and_phosphoscore <- function(footprint_output, phosphoscore_df
   }else{stop('please provide valid analysis type')}
 
 
-  comp <- full_join(footprint_output, phosphoscore_df, by = c('gene_name', 'UNIPROT', 'MF'))
+  comp <- dply::full_join(footprint_output, phosphoscore_df, by = c('gene_name', 'UNIPROT', 'MF'))
 
   comp$final_score <- NA
   comp$final_score[!is.na(comp$weightedNES) & !is.na(comp$phosphoscore)] <- rowMeans(comp[!is.na(comp$weightedNES) & !is.na(comp$phosphoscore), c('weightedNES', 'phosphoscore')])
