@@ -8,24 +8,29 @@ run_footprint_based_analysis(
   omic_data,
   analysis,
   organism,
-  minsize,
-  viper_significance,
-  hypergeometric_correction
+  reg_minsize,
+  exp_sign,
+  hypergeom_corr
 )
 }
 \arguments{
-\item{omic_data}{phosphoproteomics or transcriptomics data}
+\item{omic_data}{dataset of experimental measured phosphosites or transcripts}
 
-\item{analysis}{tfea or ksea}
+\item{analysis}{string, tfea or ksea}
 
-\item{organism}{mouse or human}
+\item{organism}{string, mouse or human}
 
-\item{minsize}{VIPER parameter for minsize of regulon}
+\item{reg_minsize}{integer value, VIPER parameter for minsize of regulon}
 
-\item{hypergeometric_correction}{if you want hypergeometric correction or not}
+\item{exp_sign}{boolean value, TRUE use only significant analytes,
+FALSE: all measured analytes}
+
+\item{hypergeom_corr}{boolean value, TRUE apply hypergeometric correction,
+FALSE no correction}
 }
 \value{
-dataset of inferred proteins: tfs or kins and phos
+dataset of inferred proteins: transcription factor (tfea)
+or kinases and phosphatases (ksea)
 }
 \description{
 run footprint based analysis

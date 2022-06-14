@@ -7,13 +7,18 @@
 phosphoscore_computation(
   phosphoproteomic_data,
   organism,
-  path_fasta = "./phospho.fasta"
+  path_fasta = "./phospho.fasta",
+  local
 )
 }
 \arguments{
 \item{phosphoproteomic_data}{dataset of phosphoproteomics measurments}
 
 \item{organism}{string human or mouse}
+
+\item{path_fasta}{optional}
+
+\item{local}{DEVELOPMENTAL PURPOSES}
 }
 \value{
 phosphoscore dataset with gene_name, inferred activity and

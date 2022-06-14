@@ -4,7 +4,7 @@
 \alias{run_viper}
 \title{Run VIPER analysis}
 \usage{
-run_viper(viper_format, analysis, organism, minsize)
+run_viper(viper_format, analysis, organism, reg_minsize)
 }
 \arguments{
 \item{viper_format}{omic dataset in VIPER format}
@@ -13,7 +13,7 @@ run_viper(viper_format, analysis, organism, minsize)
 
 \item{organism}{string reporting the organism}
 
-\item{minsize}{viper function param: minimum regulon size to consider}
+\item{reg_minsize}{viper function param: minimum regulon size to consider}
 }
 \value{
 a list containing significantly enriched proteins and

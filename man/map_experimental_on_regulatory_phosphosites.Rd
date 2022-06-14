@@ -7,11 +7,16 @@
 map_experimental_on_regulatory_phosphosites(
   phosphoproteomic_data,
   organism,
-  path_fasta
+  path_fasta,
+  local
 )
 }
 \arguments{
-\item{organism}{}
+\item{phosphoproteomic_data}{dataset of phosphoproteomics data}
+
+\item{organism}{string, human mouse or hybrid}
+
+\item{local}{DEVELOPMENTAL PURPOSES TRUE OR FALSE}
 }
 \value{
 phosphoscore_df representing experimentally quantified phosphosites

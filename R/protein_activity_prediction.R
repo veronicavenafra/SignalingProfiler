@@ -66,19 +66,19 @@ create_viper_format <- function(omic_data, analysis, significance){
 #' @param viper_format omic dataset in VIPER format
 #' @param analysis string representing 'tfea' or 'ksea' analysis
 #' @param organism string reporting the organism
-#' @param minsize viper function param: minimum regulon size to consider
+#' @param reg_minsize viper function param: minimum regulon size to consider
 #'
 #' @return a list containing significantly enriched proteins and
 #' all inferred proteins
 #' @export
 #'
 #' @examples
-run_viper <- function(viper_format, analysis, organism, minsize){
+run_viper <- function(viper_format, analysis, organism, reg_minsize){
 
   # viper_format <- v
   # analysis <- 'ksea'
   # organism <- 'mouse'
-  # minsize = 1
+  # reg_minsize = 1
 
   # create the format needed for viper
   diff_matrix <- create_matrix_from_VIPER_format(viper_format)
@@ -108,13 +108,13 @@ run_viper <- function(viper_format, analysis, organism, minsize){
   regulons <- regulons %>% dplyr::distinct()
 
   if(identical(intersect(rownames(diff_matrix), regulons$target), character(0))){
-    stop('No measured analyte found in regulons')
+    stop('No measured analytes found in regulons, please check if regulons\' organism and experimental organism match')
     return(NULL)
 
   }else{
     viper_object <- viper::msviper(diff_matrix,
                                    dorothea::df2regulon(regulons),
-                                   minsize = minsize,
+                                   minsize = reg_minsize,
                                    #method = 'rank',
                                    ges.filter = FALSE,
                                    cores = 1,
@@ -253,7 +253,9 @@ run_hypergeometric_test <- function(omic_data, viper_output,
     pr_joined$pWeight[pr_joined$gene_name == protein] <- v$Significance
   }
 
-  pr_joined <- pr_joined #%>% dplyr::rename(gene_name = tf)
+  pr_joined <- pr_joined %>%
+    dplyr::rename(reg_exp_meas = Measured,
+                  reg_exp_sign = Significant)
 
   return(pr_joined)
 }
@@ -290,13 +292,13 @@ weight_viper_score <- function(ea_output){
 
   ea_output_log <- ea_output %>%
     dplyr::filter(pWeight != 1) %>%
-    dplyr::mutate(log = -log(pWeight))
+    dplyr::mutate(weight = -log(pWeight))
 
-  ea_output_log$log[ea_output_log$log == Inf] <- 10
-  ea_output_log$log <- ea_output_log$log/10
+  ea_output_log$weight[ea_output_log$weight == Inf] <- 10
+  ea_output_log$weight <- ea_output_log$weight/10
 
   ea_output_log <- ea_output_log %>%
-    dplyr::mutate(weightedNES = log * NES) %>%
+    dplyr::mutate(weightedNES = weight * NES) %>%
     dplyr::arrange(gene_name)
 
   return(ea_output_log)
@@ -323,35 +325,39 @@ filter_VIPER_output <- function(inferred_proteins_mf, analysis){
 
 #' run footprint based analysis
 #'
-#' @param omic_data phosphoproteomics or transcriptomics data
-#' @param analysis tfea or ksea
-#' @param organism mouse or human
-#' @param minsize VIPER parameter for minsize of regulon
-#' @param hypergeometric_correction if you want hypergeometric correction or not
-#'
-#' @return dataset of inferred proteins: tfs or kins and phos
+#' @param omic_data dataset of experimental measured phosphosites or transcripts
+#' @param analysis string, tfea or ksea
+#' @param organism string, mouse or human
+#' @param reg_minsize integer value, VIPER parameter for minsize of regulon
+#' @param exp_sign boolean value, TRUE use only significant analytes,
+#' FALSE: all measured analytes
+#' @param hypergeom_corr boolean value, TRUE apply hypergeometric correction,
+#' FALSE no correction
+#' @return dataset of inferred proteins: transcription factor (tfea)
+#' or kinases and phosphatases (ksea)
 #' @export
 #'
 #' @examples
 run_footprint_based_analysis <- function(omic_data, analysis, organism,
-                                         minsize, viper_significance,
-                                         hypergeometric_correction){
+                                         reg_minsize, exp_sign,
+                                         hypergeom_corr){
   message(' ** RUNNING FOOTPRINT BASED ANALYSIS ** ')
-  # omic_data <- tr_df
-  # analysis <- 'tfea'
-  # organism <- 'mouse'
-  # minsize <- 1
-  # viper_significance <- TRUE
-  # hypergeometric_correction <- FALSE
+
+  # omic_data <- phospho_df
+  # analysis <- 'ksea'
+  # organism <- 'human'
+  # reg_minsize <- 1
+  # exp_sign <- FALSE
+  # hypergeom_corr <- TRUE
 
 
   # run viper analysis
-  viper_format <- create_viper_format(omic_data, analysis, significance = viper_significance)
+  viper_format <- create_viper_format(omic_data, analysis, significance = exp_sign)
 
 
   message('Starting VIPER analysis')
-  output <- run_viper(viper_format, analysis, organism, minsize)
-  if(hypergeometric_correction == TRUE){
+  output <- run_viper(viper_format, analysis, organism, reg_minsize)
+  if(hypergeom_corr == TRUE){
     message('Starting hypergeometric test correction')
     output <- weight_viper_score(run_hypergeometric_test(omic_data,output$sign, analysis, organism))
 
@@ -374,6 +380,8 @@ run_footprint_based_analysis <- function(omic_data, analysis, organism,
 #'
 #' @param phosphoproteomic_data dataset of phosphoproteomics measurments
 #' @param organism string human or mouse
+#' @param path_fasta optional
+#' @param local DEVELOPMENTAL PURPOSES
 #'
 #' @return phosphoscore dataset with gene_name, inferred activity and
 #' used phosphosites from experimental data
@@ -382,12 +390,13 @@ run_footprint_based_analysis <- function(omic_data, analysis, organism,
 #' @examples
 phosphoscore_computation <- function(phosphoproteomic_data,
                                     organism,
-                                    path_fasta = './phospho.fasta'){
+                                    path_fasta = './phospho.fasta',
+                                    local = FALSE){
   message('** RUNNING PHOSPHOSCORE ANALYSIS **')
   # phosphoproteomic_data <- phospho_df
   # path_fasta = './phospho.fasta'
-  # organism = 'mouse'
-  #
+  # organism = 'hybrid'
+  # local = TRUE
 
   if(organism == 'mouse' | organism =='human'){
     phosphoscore_df_output <- map_experimental_on_regulatory_phosphosites(phosphoproteomic_data,
@@ -395,7 +404,7 @@ phosphoscore_computation <- function(phosphoproteomic_data,
     phosphoscore_df <- phosphoscore_df_output$phosphoscore_df
   }else if(organism == 'hybrid'){
     phosphoscore_df_output <- phospho_score_hybrid_computation(phosphoproteomic_data,
-                                                        organism, path_fasta)
+                                                        organism, path_fasta, local)
     phosphoscore_df <- phosphoscore_df_output$phosphoscore_df
   }else{
     stop('please provide a valid organism')
@@ -420,10 +429,10 @@ phosphoscore_computation <- function(phosphoproteomic_data,
 
   if(organism == 'hybrid'){
     genes <- phosphoscore_df %>%
-      dplyr::select(gene_name, from_who) %>%
+      dplyr::select(gene_name, source_org) %>%
       dplyr::distinct() %>%
       dplyr::group_by(gene_name) %>%
-      dplyr::summarise(from_who = paste0(from_who, collapse = ';'))
+      dplyr::summarise(source_org = paste0(source_org, collapse = ';'))
     output <- dplyr::left_join(output, genes, by = c('gene_name'))
   }
 
@@ -468,6 +477,7 @@ create_fasta <- function(phospho_df, path){
 #' phosphoproteomics data in fasta file
 #' @param all boolean value representing if you want all alingments
 #' or only the ones with same gene_name
+#' #' @param local FOR DEVELOPMENTAL PURPOSES TO DELETE
 #'
 #' @return a list containing:
 #' a dataframe of the sure mouse phosphopeptides aligned on human
@@ -476,10 +486,14 @@ create_fasta <- function(phospho_df, path){
 #' @export
 #'
 #' @examples
-run_blast <- function(path_experimental_fasta_file, all = FALSE){
+run_blast <- function(path_experimental_fasta_file, all = FALSE, local = FALSE){
+
   message('Running blastp')
   path_experimental_fasta_file <- './phospho.fasta'
-  path_package <- paste0(.libPaths(), '/SignalingProfiler/')
+  local = TRUE
+  if(local == TRUE){path_package <- './'
+  }else{ path_package <- paste0(.libPaths(), '/SignalingProfiler/')}
+
   blastp <- paste0('blastp -query ', path_experimental_fasta_file,
                    ' -subject ', paste0(path_package, 'data/human_phosphosites_db.fasta '), '-out map2.out -outfmt 7 -evalue 0.05')
   system(blastp)
@@ -543,8 +557,10 @@ generate_hybrid_db <- function(mh_alignment){
 
 #' Title
 #'
-#' @param phosphoproteomic_data
-#' @param organism
+#' @param phosphoproteomic_data dataset of phosphoproteomics data
+#' @param organism string, human mouse or hybrid
+#' @param local DEVELOPMENTAL PURPOSES TRUE OR FALSE
+#'
 #'
 #' @return phosphoscore_df representing experimentally quantified phosphosites
 #' associated to their fold-change
@@ -553,7 +569,7 @@ generate_hybrid_db <- function(mh_alignment){
 #' @examples
 map_experimental_on_regulatory_phosphosites <- function(phosphoproteomic_data,
                                                         organism,
-                                                        path_fasta){
+                                                        path_fasta, local = FALSE){
   if(organism == 'human'){
     message('Mapping experimental phosphopeptides on human database of regulatory roles')
     reg_phos_db <- good_phos_df_human
@@ -564,7 +580,7 @@ map_experimental_on_regulatory_phosphosites <- function(phosphoproteomic_data,
   }else if(organism == 'hybrid'){
     message('Mapping mouse experimental phosphopeptides on human database of regulatory roles to enhance coverage')
     create_fasta(phosphoproteomic_data, path_fasta)
-    reg_phos_db <- generate_hybrid_db(mh_alignment = run_blast(path_fasta)$mapped)
+    reg_phos_db <- generate_hybrid_db(mh_alignment = run_blast(path_fasta, local)$mapped)
   }else{
     stop('please provide a valid organism')
   }
@@ -599,13 +615,13 @@ map_experimental_on_regulatory_phosphosites <- function(phosphoproteomic_data,
 #' @examples
 phospho_score_hybrid_computation <- function(phosphoproteomic_data,
                                              organism,
-                                             path_fasta = './phospho.fasta'){
+                                             path_fasta = './phospho.fasta', local){
 
-  phosphoscore_df_mouse_output <- map_experimental_on_regulatory_phosphosites(phosphoproteomic_data, 'mouse')
+  phosphoscore_df_mouse_output <- map_experimental_on_regulatory_phosphosites(phosphoproteomic_data, 'mouse', local)
   phosphoscore_df_mouse <- phosphoscore_df_mouse_output$phosphoscore_df %>%
     dplyr::select(PHOSPHO_KEY_GN_SEQ, inferred_activity, gene_name)
 
-  phosphoscore_df_hybrid_output <- map_experimental_on_regulatory_phosphosites(phosphoproteomic_data, 'hybrid',path_fasta)
+  phosphoscore_df_hybrid_output <- map_experimental_on_regulatory_phosphosites(phosphoproteomic_data, 'hybrid',path_fasta, local)
   phosphoscore_df_hybrid <- phosphoscore_df_hybrid_output$phosphoscore_df %>%
     dplyr::select(PHOSPHO_KEY_GN_SEQ, inferred_activity, gene_name)
 
@@ -616,17 +632,17 @@ phospho_score_hybrid_computation <- function(phosphoproteomic_data,
     dplyr::distinct() %>%
     dplyr::arrange(PHOSPHO_KEY_GN_SEQ)
 
-  joined_tables$from_who <- 'both'
-  joined_tables$from_who[is.na(joined_tables$inferred_activity.m)] <- 'human'
-  joined_tables$from_who[is.na(joined_tables$inferred_activity.h)] <- 'mouse'
+  joined_tables$source_org <- 'both'
+  joined_tables$source_org[is.na(joined_tables$inferred_activity.m)] <- 'human'
+  joined_tables$source_org[is.na(joined_tables$inferred_activity.h)] <- 'mouse'
 
   joined_tables$inferred_activity <- NA
-  joined_tables$inferred_activity[joined_tables$from_who == 'both'] <- joined_tables$inferred_activity.m[joined_tables$from_who == 'both']
-  joined_tables$inferred_activity[joined_tables$from_who == 'human'] <- joined_tables$inferred_activity.h[joined_tables$from_who == 'human']
-  joined_tables$inferred_activity[joined_tables$from_who == 'mouse'] <- joined_tables$inferred_activity.m[joined_tables$from_who == 'mouse']
+  joined_tables$inferred_activity[joined_tables$source_org == 'both'] <- joined_tables$inferred_activity.m[joined_tables$source_org == 'both']
+  joined_tables$inferred_activity[joined_tables$source_org == 'human'] <- joined_tables$inferred_activity.h[joined_tables$source_org == 'human']
+  joined_tables$inferred_activity[joined_tables$source_org == 'mouse'] <- joined_tables$inferred_activity.m[joined_tables$source_org == 'mouse']
 
   phosphoscore_df_flag <- joined_tables %>%
-    dplyr::select(PHOSPHO_KEY_GN_SEQ, gene_name,from_who, inferred_activity)
+    dplyr::select(PHOSPHO_KEY_GN_SEQ, gene_name,source_org, inferred_activity)
 
   # experimental used data
   used_exp_data_both <- dplyr::bind_rows(phosphoscore_df_mouse_output$used_exp_data,
