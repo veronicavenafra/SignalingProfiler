@@ -637,6 +637,16 @@ phospho_score_hybrid_computation <- function(phosphoproteomic_data,
          phosphoscore_df = phosphoscore_df_flag))
 }
 
+#' Title
+#'
+#' @param footprint_output output of footprint based
+#' @param phosphoscore_df output of phosphoscore based
+#' @param analysis type of analysis
+#'
+#' @return dataset of inferred proteins with combined scores
+#' @export
+#'
+#' @examples
 combine_footprint_and_phosphoscore <- function(footprint_output, phosphoscore_df, analysis){
   # footprint_output <- test_foot
   # phosphoscore_df <- test
