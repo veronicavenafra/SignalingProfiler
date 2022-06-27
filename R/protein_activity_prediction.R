@@ -489,6 +489,7 @@ create_fasta <- function(phospho_df, path){
 run_blast <- function(path_experimental_fasta_file, all = FALSE, local = FALSE){
 
   message('Running blastp')
+  #print(local)
   # path_experimental_fasta_file <- './phospho.fasta'
   # local = TRUE
   if(local == TRUE){path_package <- './'
@@ -580,7 +581,7 @@ map_experimental_on_regulatory_phosphosites <- function(phosphoproteomic_data,
   }else if(organism == 'hybrid'){
     message('Mapping mouse experimental phosphopeptides on human database of regulatory roles to enhance coverage')
     create_fasta(phosphoproteomic_data, path_fasta)
-    reg_phos_db <- generate_hybrid_db(mh_alignment = run_blast(path_fasta, local)$mapped)
+    reg_phos_db <- generate_hybrid_db(mh_alignment = run_blast(path_fasta, local = local)$mapped)
   }else{
     stop('please provide a valid organism')
   }
